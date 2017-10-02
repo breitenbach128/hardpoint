@@ -1,5 +1,5 @@
 #!/bin/env node
-//  OpenShift Hardpoint application
+//  Hardpoint application
 //https://github.com/jaredhanson/passport-google-oauth/blob/master/examples/oauth2/app.js
 var express = require('express');
 var fs      = require('fs');
@@ -119,7 +119,7 @@ var hp_matches_col = db.collection('hp_matches');
 passport.use(new GoogleStrategy({
     clientID: GOOGLE_CLIENT_ID,
     clientSecret: GOOGLE_CLIENT_SECRET,
-    //callbackURL: 'http://localhost:'+process.env.OPENSHIFT_NODEJS_PORT+'/auth/google/return'
+    //callbackURL: 'http://localhost:'+process.env.PORT+'/auth/google/return'
     callbackURL: 'http://game-128ghardpoint.rhcloud.com/auth/google/return'
 },
   function(accessToken, refreshToken, profile, done) {
@@ -210,23 +210,12 @@ var SampleApp = function() {
      */
     self.setupVariables = function() {
         //  Set the environment variables we need.
-        self.ipaddress = process.env.OPENSHIFT_NODEJS_IP;
-        self.port      = process.env.OPENSHIFT_NODEJS_PORT || 8080;
+        self.ipaddress =  process.env.IP;
+        self.port      = 3000 || 8080;
         // default to a 'localhost' configuration:
-        
-        // if OPENSHIFT env variables are present, use the available connection info:
-        if(process.env.OPENSHIFT_MONGODB_DB_PASSWORD){
-            connection_string = process.env.OPENSHIFT_MONGODB_DB_USERNAME + ":" +
-            process.env.OPENSHIFT_MONGODB_DB_PASSWORD + "@" +
-            process.env.OPENSHIFT_MONGODB_DB_HOST + ':' +
-            process.env.OPENSHIFT_MONGODB_DB_PORT + '/' +
-            process.env.OPENSHIFT_APP_NAME;
-        }
 
         if (typeof self.ipaddress === "undefined") {
-            //  Log errors on OpenShift but continue w/ 127.0.0.1 - this
-            //  allows us to run/test the app locally.
-            console.warn('No OPENSHIFT_NODEJS_IP var, using 127.0.0.1');
+            console.warn('No IP var, using 127.0.0.1');
             self.ipaddress = "127.0.0.1";
         };
     };
