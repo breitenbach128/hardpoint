@@ -120,7 +120,7 @@ passport.use(new GoogleStrategy({
     clientID: GOOGLE_CLIENT_ID,
     clientSecret: GOOGLE_CLIENT_SECRET,
     //callbackURL: 'http://localhost:'+process.env.PORT+'/auth/google/return'
-    callbackURL: 'http://www.128games.com/auth/google/return'
+    callbackURL: 'http://www.128games.com:8080/auth/google/return'
 },
   function(accessToken, refreshToken, profile, done) {
       // asynchronous verification, for effect...
@@ -615,7 +615,7 @@ var SampleApp = function() {
  
             self.app.use(function(req, res, next) {
                 res.header('Access-Control-Allow-Credentials',true);
-                //res.header('Access-Control-Allow-Origin', 'http://www.128games.com');
+                //res.header('Access-Control-Allow-Origin', 'http://www.128games.com:8080');
                 res.header('Access-Control-Allow-Origin', '*');
                 res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
                 res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Origin, Accept, *');
