@@ -210,8 +210,8 @@ var SampleApp = function() {
      */
     self.setupVariables = function() {
         //  Set the environment variables we need.
-        self.ipaddress =  process.env.IP;
-        self.port      = 3000 || 8080;
+        self.ipaddress =  process.env.IP || "165.227.202.251";
+        self.port      = process.env.PORT || 8080;
         // default to a 'localhost' configuration:
 
         if (typeof self.ipaddress === "undefined") {
@@ -1878,7 +1878,7 @@ var SampleApp = function() {
         //                Date(Date.now() ), self.ipaddress, self.port);
         //});
         self.server.listen(self.port,self.ipaddress,function() {
-            console.log('listening');
+            console.log('listening',self.ipaddress,self.port);
         });
     };
 
