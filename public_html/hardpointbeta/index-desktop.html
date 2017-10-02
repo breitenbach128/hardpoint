@@ -1,0 +1,1365 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<title>Impact Game</title>
+    <style>
+        @font-face {
+            font-family: 'visitorTT1';
+            src: url('media/fonts/visitor/VisitorTT1BRK.eot');
+            src: local('☺'), url('media/fonts/visitor/VisitorTT1BRK.woff') format('woff'), url('media/fonts/visitor/visitor1.ttf') format('truetype'), url('media/fonts/visitor/VisitorTT1BRK.svg') format('svg');
+            font-weight: normal;
+            font-style: normal;
+        }
+    </style>    
+    <!-- Core Scripts-->
+    <link rel="stylesheet" type="text/css" href="css/hardpoint.css">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+    <link href="css/animate-animo.min.css" rel="stylesheet" type="text/css">
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+    <script src="includes/animo.min.js" type="text/javascript"></script>
+	<script type="text/javascript" src="lib/impact/impact.js"></script>
+	<script type="text/javascript" src="lib/game/main.js"></script>
+    <!--<script id="ioloader" type="text/javascript" src="http://localhost:1337/socket.io/socket.io.js"></script>-->
+    <script src="sm_script/soundmanager2.js"></script>
+    <!-- Sound Manager 2 Initial Setup-->
+    <script>
+        var themesound;
+        var soundManager;
+        soundManager.setup({
+            url: ' http://localhost:8080/hardpoint/sm_swf',
+            flashVersion: 9, // optional: shiny features (default = 8)
+            // optional: ignore Flash where possible, use 100% HTML5 mode
+            // preferFlash: false,
+            debugFlash: false,
+            debugMode: false,
+            useHTML5Audio: true,
+            onready: function () {
+                // Ready to use; soundManager.createSound() etc. can now be called.
+               //console.log("SM Ready");
+                //Theme Music
+                themesound = soundManager.createSound({
+                    id: 'music_maintheme',
+                    url: './media/sounds/Exciting_Trailer.mp3',
+                    volume: 50,
+                    onfinish: function () {
+                        this.play();
+                    },
+                });
+                //themesound.play();
+            },
+            ontimeout: (function () {
+                // SM2 could not start. Flash blocked, missing or security error? Complain, etc.?
+            })
+        });
+        soundManagerGlobalVolume = 50;
+       //console.log(1024 * 1024 * 5 - unescape(encodeURIComponent(JSON.stringify(localStorage))).length);//Remaining space
+        //Setup check for browser type. Non-Chrome browers should alert to performance issues.
+        var isOpera = !!window.opera || navigator.userAgent.indexOf(' OPR/') >= 0;
+        // Opera 8.0+ (UA detection to detect Blink/v8-powered Opera)
+        var isFirefox = typeof InstallTrigger !== 'undefined';   // Firefox 1.0+
+        var isSafari = Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0;
+        // At least Safari 3+: "[object HTMLElementConstructor]"
+        var isChrome = !!window.chrome && !isOpera;              // Chrome 1+
+        var isIE = /*@cc_on!@*/false || !!document.documentMode; // At least IE6
+        if (isOpera || isSafari || isIE || isFirefox) {
+            //alert("This game runs best in Chrome. You may experience degraded performance in Firefox/IE/Safari due to issues with the game engine.");
+        }
+        function soundLoop(sound) {
+            sound.play({
+                onfinish: function() {
+                    soundLoop(sound);
+                }
+            });
+        }
+
+    </script>
+</head>
+<body>
+    <div style="vertical-align:middle;text-align:center;width:100%;margin-left:auto;margin-right:auto;">
+	    <canvas id="canvas" tabindex="1" style="display: inline-block; margin-left: auto; margin-right: auto; vertical-align: middle;margin-top:32px;"></canvas>
+        <canvas id="hudcanvas" tabindex="200" style="display: inline-block; margin-left: auto; margin-right: auto; vertical-align: middle;margin-top:32px;"></canvas>
+    </div>
+    <div id="gameBorderLeft"></div>
+    <div id="gameBorderRight"></div>
+    <div id="gameBorderTop"></div>
+    <div id="gameBorderBottom"></div>
+    <div id="chatparent">
+        <div id="chatlogdragtop" style="width:100%;height:16px;"></div>
+        <div id="close_chatwindow" class="playMapButton" style="float:right;">
+        [ X ]
+        </div>
+        <table>
+            <tr>
+                <td style="width:80%;">
+                <div id="chatLog">
+                    <div id="chatlogTable" style="display:table;"></div>
+                </div>
+                </td>
+                <td style="width:20%;">
+                <div id="chatlogplayerlistparent">
+                    <div id="chatlogplayerlist" style="display:table;">
+
+                    </div>
+                </div>
+                </td>
+            </tr>
+        </table>
+        <textarea id="chatarea" rows="2" cols="100" maxlength="192">Send /? to list commands.</textarea>
+        <div id="sendChatButton" class="weaponMenubtn" style="height: 20px;width:60px;position:absolute;left: 10px;">Send</div>
+    </div>
+    <div id="mainmenu">
+        <div id="mainmenuholder" style="display:table; width:100%">
+            <div style="display: table-row;">
+                <div style="display: table-cell;text-align: center">
+                    <div id="cgamebutton" style="display:inline-block;" class="gameMenuBtn">Create Game</div>
+                </div>
+            </div>
+            <div style="display: table-row;">
+                <div style="display: table-cell;text-align: center">
+                    <div id="jgamebutton" style="display:inline-block;" class="gameMenuBtn">Join Game</div>
+                </div>
+            </div>
+            <div style="display: table-row;">
+                <div style="display: table-cell;text-align: center">
+                    <div id="ogamebutton" style="display:inline-block;" class="gameMenuBtn">Options</div>
+                </div>
+            </div>
+            <div style="display: table-row;">
+                <div style="display: table-cell;text-align: center">
+                    <div id="crgamebutton" style="display:inline-block;" class="gameMenuBtn">Credits</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="tankmenuparent">
+        <table style="height: 100%;padding: 24px 24px 24px 24px;">
+        <tr style="height: 100%;">
+        <td style="height: 100%;width:512px;">
+            <div id="chassisEquipInfo" style="text-align:left;">
+                Click a weapon to learn more about it.
+            </div>
+        </td>
+        <td style="height: 100%;width:512px;">
+        <div class="tankmenuheader"><span class="tankmenuheaderText">Equip your Tank: <br />Drag and Drop New Weapons</span></div>
+
+        <div id="chassisEquip" style="background-image: url('media/Chasslayoutbg.png');">
+
+            <!-- 448ht x 288wt -->
+            <div id='chassisLayout' style="background-color: #000000; border: 1px solid #FFFFFF; display: table; height: 100%;background-image: url('media/Chasslayoutbg.png');">
+                <div style="display:table-row; text-align:center;">
+                    <div style="display:table-cell;"><div id="chassisFL" class="tankmenuhardpointDisabled">FL</div></div>
+                    <div style="display:table-cell;"><div id="chassisFC" class="tankmenuhardpointDisabled">FC</div></div>
+                    <div style="display:table-cell;"><div id="chassisFR" class="tankmenuhardpointDisabled">FR</div></div>
+                </div>
+
+                <div style="display: table-row; text-align: center; ">
+                    <div style="display:table-cell;"><div id="chassisLF" class="tankmenuhardpointDisabled">LF</div></div>
+                    <div style="display:table-cell;"><div id="chassisNull" class="tankmenuhardpointDisabled">.</div></div>
+                    <div style="display:table-cell;"><div id="chassisRF" class="tankmenuhardpointDisabled">RF</div></div>
+                </div>
+
+                <div style="display: table-row; text-align: center; ">
+                    <div style="display:table-cell;"><div id="chassisNull" class="tankmenuhardpointDisabled">.</div></div>
+                    <div style="display:table-cell;"><div id="chassisC" class="tankmenuhardpointDisabled">C</div></div>
+                    <div style="display:table-cell;"><div id="chassisNull" class="tankmenuhardpointDisabled">.</div></div>
+                </div>
+
+                <div style="display: table-row; text-align: center; ">
+                    <div style="display:table-cell;"><div id="chassisLB" class="tankmenuhardpointDisabled">LB</div></div>
+                    <div style="display:table-cell;"><div id="chassisNull" class="tankmenuhardpointDisabled">.</div></div>
+                    <div style="display:table-cell;"><div id="chassisRB" class="tankmenuhardpointDisabled">RB</div></div>
+                </div>
+
+                <div style="display: table-row; text-align: center; ">
+                    <div style="display:table-cell;"><div id="chassisBL" class="tankmenuhardpointDisabled">BL</div></div>
+                    <div style="display:table-cell;"><div id="chassisBC" class="tankmenuhardpointDisabled">BC</div></div>
+                    <div style="display:table-cell;"><div id="chassisBR" class="tankmenuhardpointDisabled">BR</div></div>
+                </div>
+
+            </div>
+
+        </div>   
+
+        </td></tr>
+        </table>
+    </div>
+    
+    <div id="weaponInventory">
+        <span id="weaponInventoryHeader" class="MenuHeader1" style="position: relative;top: -8px;text-align: center;font-size: 130%;">Weapons Available</span>
+        <div id='wpInventory' class="table">
+            <div class="row">
+                <div id="wp1" weaponID="0" style="display: table-cell; border: 1px solid #000000; height: 64px; width: 96px; background: url('media/weapons64.png') 0 0">wp1</div>
+                <div id="wp2" weaponid="1" style="display: table-cell; border: 1px solid #000000; height: 64px; width: 96px; background: url('media/weapons64.png') 0px -64px; ">wp2</div>
+                <div id="wp3" weaponid="2" style="display: table-cell; border: 1px solid #000000; height: 64px; width: 96px; background: url('media/weapons64.png') 0px -128px; ">wp3</div>
+                <div id="wp4" weaponid="3" style="display: table-cell; border: 1px solid #000000; height: 64px; width: 96px; background: url('media/weapons64.png') 0px -192px; ">wp4</div>
+            </div>
+        </div>
+    </div>
+    <div id="perkInventory">
+    <span id="perkInventoryHeader" class="MenuHeader1" style="position: relative;top: -8px;text-align: center;font-size: 130%;">Perks Available</span>
+    <div id='pkInventory' class="table">
+        <div class="row">
+
+        </div>
+    </div>
+</div>
+
+    <div id="createGameParent">
+        New Game Name:
+        <input id="gamenamebox" type="text" pattern="[a-zA-Z0-9]+" maxlength="10" /><div id="nogamenamewarning"></div>
+        <div>ADD BOTS?
+            <div class="checkbox_type1">
+                <input type="checkbox" value="None" id="ganmeaddbotsflag" name="aicheckbox" />
+                <label for="ganmeaddbotsflag"></label>
+            </div>
+        </div>
+        <br /><br /><br />
+        <div style="display: table-row;">
+            <div style="border: solid 2px black; display: table-cell;">
+                <div id="levelmapdisplay" style="border: solid 2px black; width: 350px; float: left; text-align: center;">                
+                    Level Preview:<br />
+                <img src="" id="gamemap" style="height: 300px; width: 300px" />
+                </div>
+                <div id="leveldescription" style="border: solid 2px black; width: 350px; float: left;">
+                    Level Description:
+                </div>
+            </div>
+
+            <div style="border: solid 2px black; width: 350px;display: table-cell;vertical-align:top;">
+                <div id="gamelistingbuttons" style="height: 350px; overflow: auto; overflow-x: hidden;">
+                </div>
+            </div>
+        </div>
+        <div style="border: solid 2px black; width: 100%; display: table-row;">
+            <div style="display: table-cell">
+                <div id="backcreategame" class="gameMenuBtn">Back</div>
+            </div>
+            <div style="display: table-cell">
+                <div id="newcreateGame" class="gameMenuBtn" style="margin-left:auto">Create</div>
+            </div>
+        </div> 
+    </div>
+   
+    <div id="GameBrowserParent">
+        <div id="GameBrowserContent">
+            <div class="row">
+                <div class="cellGB">
+                    <div style="position:absolute;top: 4px;right: 36px;">                        
+                        <div id="exitGameBrowser" class="weaponMenubtn" >Back</div>
+                    </div>
+                    
+                    CURRENT Games<br /><br /><br />
+                    <div>Remove Started Games<input id="filtergamesStarted" type="checkbox" /></div><div>Remove Full Games<input id="filtergamesFull" type="checkbox" /></div>
+                    <br />
+                    <div id="GameBrowserGameList">                        
+
+                    </div>
+                </div>
+            </div>    
+        </div>
+    </div>
+    <div id="joinGameButton" class="weaponMenubtn" selectedRoom="">JOIN GAME</div>
+
+    <div id="playLobbyParent">
+        <div id="playLobby"  style="display:table;width:100%;">
+            Starting Game. Please wait...
+        </div>
+        <div id="playLobbyCountdown"></div>
+    </div>
+    <div id="KickedAlert">You have been vote kicked! Please try joining another match.<div id="KickedAlertAck" class="weaponMenubtn">OK</div></div>
+    <div id="optionsMenuParent">
+        <div id="optionsMenuHeader"><div id="optionsMenuHeaderText">Options</div></div>
+        <div id="optionsMenuContent">
+
+            <div id="optMenuSoundLevel">Sound Level<br />
+          
+                <input id="slider_sound" type="range" min="0" max="100" step="1" value="50" style="width:200px;">   <br />                    
+                    <div id="optMenu_soundlevel">0</div>                
+
+            </div>
+            <br />
+
+            <div id="optMenuMusicLevel">Music Level<br />
+                <input id="slider_music" type="range" min="0" max="100" step="1" value="50" style="width:200px;">  <br />
+                    <div id="optMenu_musiclevel">0</div>          
+
+            </div>
+            
+            <br />
+            <div id="optMenuControlsOpen" style="display: inline-block;" class="optButton">
+                <div style="display: inline-block;vertical-align: middle;line-height:normal">Controls</div>
+            </div> 
+            <br />
+            MiniMap options:
+            <div style="display:table;margin-left:auto;margin-right:auto;">
+                <div style="display:table-row;">
+                    <div style="display:table-cell"> 
+                        <div id="optMenu_mmleft" class="optButton"><div style="display: inline-block;vertical-align: middle;line-height:normal">Left</div></div> 
+                    </div>
+                    <div style="display:table-cell">                         
+                        <div id="optMenu_mmcenter" class="optButton"><div style="display: inline-block;vertical-align: middle;line-height:normal">Center</div></div>  
+                    </div>
+                    <div style="display:table-cell">                         
+                        <div id="optMenu_mmright" class="optButton"><div style="display: inline-block;vertical-align: middle;line-height:normal">Right</div></div>
+                    </div>
+                </div>
+            </div>
+            <div id="optMenu_mmselectbar" class="optmenuSelectedBar" style=""></div>
+            <br />
+            Particle options:
+            <div style="display:table;margin-left:auto;margin-right:auto;">
+                <div style="display:table-row;">
+                    <div style="display:table-cell"> 
+                        <div id="optMenu_parEffOff" class="optButton" title="Turn off particle effects to enhance performance." ><div style="display: inline-block;vertical-align: middle;line-height:normal">Off</div></div> 
+                    </div>
+                    <div style="display:table-cell">                         
+                        <div id="optMenu_parEffLow" class="optButton" title="Turn particle effects to low to enhance performance."><div style="display: inline-block;vertical-align: middle;line-height:normal">Low</div></div>  
+                    </div>
+                    <div style="display:table-cell">                         
+                        <div id="optMenu_parEffNormal" class="optButton" title="Display all normal impact particles" ><div style="display: inline-block;vertical-align: middle;line-height:normal">Normal</div></div>
+                    </div>
+                </div>
+            </div>            
+            <div id="optMenu_partselectbar" class="optmenuSelectedBar"></div>
+            <br />
+            Tips:
+            <div style="display:table;margin-left:auto;margin-right:auto;">
+                <div style="display:table-row;">
+                    <div style="display:table-cell"> 
+                        <div id="optMenu_tipsOff" class="optButton" title="Turn off tips." ><div style="display: inline-block;vertical-align: middle;line-height:normal">Off</div></div> 
+                    </div>
+                    <div style="display:table-cell">                         
+                        <div id="optMenu_tipsOn" class="optButton" title="Turn on tips."><div style="display: inline-block;vertical-align: middle;line-height:normal">On</div></div>  
+                    </div>
+                </div>
+            </div>            
+            <div id="optMenu_tipsselectbar" class="optmenuSelectedBar"></div>
+        </div>
+        <div style="position:relative;bottom: 140px;text-align:center;">
+            <div id="optMenuClose" style="display:inline-block;" class="gameMenuBtn">Cancel</div>
+            <div id="optMenuApply" style="display: inline-block;" class="gameMenuBtn">Apply</div>
+            <div id="optMenuQuit" style="display:inline-block;" class="gameMenuBtn">Quit Game</div>
+        </div>
+    </div>
+    <div id="optMenuIngameOpen" class="weaponMenubtn" style="position:absolute;top:-1000px;right:36px;height:36px;width:36px;z-index: 20;">
+        <img src="media/optMenuGear.png" id="OptToggleImg" style="height: 30px; width: 30px;display:inline-block;margin-left: 3px;margin-top:3px;" />
+    </div>
+    <div id="controlsMenuParent">
+        <div style="display:inline-block;padding-top: 60px;">
+            Hardpoint Controls<br /><br />
+            <div style="display:table;">
+                <div style="display:table-row;width:100%;" class="controlsMenuRow" data-title="PLace a beacon for all teammates to see that shows on the command map.">
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Place team beacon</div>
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Q</div>
+                </div>
+                <div style="display:table-row;width:100%;" class="controlsMenuRow" data-title="Drive Forward">
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Drive Forward</div>
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">W</div>
+                </div>
+                <div style="display:table-row;width:100%;" class="controlsMenuRow" data-title="Rotate Left.">
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Turn Left</div>
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">A</div>
+                </div>
+                <div style="display:table-row;width:100%;" class="controlsMenuRow" data-title="Reverse Gear. Normally slower than forward.">
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Reverse</div>
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">S</div>
+                </div>
+                <div style="display:table-row;width:100%;" class="controlsMenuRow" data-title="Turn Right">
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Turn Right</div>
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">D</div>
+                </div>               
+                <div style="display:table-row;width:100%;" class="controlsMenuRow" data-title="Triggers the tank ability. Each chassis has its own ability.">
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Use tank ability</div>
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">R</div>
+                </div>
+                <div style="display:table-row;width:100%;" class="controlsMenuRow" data-title="Toggles the tank overlay, which helps with weapon ranges and navigation.">
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Toggle HUD Overlay</div>
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">F</div>
+                </div>
+                <div style="display:table-row;width:100%;" class="controlsMenuRow" data-title="Open the command map.">
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Open Command Map</div>
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">M</div>
+                </div>
+                <div style="display:table-row;width:100%;" class="controlsMenuRow" data-title="Lock the screen to center on the players tank.">
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Lock view to tank</div>
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Z</div>
+                </div>
+                <div style="display:table-row;width:100%;" class="controlsMenuRow" data-title="Close open menus.">
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Close all menus</div>
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">ESC</div>
+                </div>
+                <div style="display:table-row;width:100%;" class="controlsMenuRow" data-title="Display current player information.">
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Show Playerboard</div>
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">TAB</div>
+                </div>
+                <div style="display:table-row;width:100%;" class="controlsMenuRow" data-title="Hold down to fire any weapons from group 1 that are ready.">
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Fire Weapon Group 1</div>
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">MOUSE 1</div>
+                </div>
+                <div style="display:table-row;width:100%;" class="controlsMenuRow" data-title="Hold down to fire any weapons from group 2 that are ready.">
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">Fire Weapon Group 2</div>
+                    <div style="display:table-cell;border: solid #a59a9a 2px;width:50%;">MOUSE 2</div>
+                </div>
+            </div>
+        </div>
+        <div style="position:relative;bottom: -20px;text-align:center;margin-left:auto;margin-right:auto;">
+            <div id="controlsMenuQuit" style="display:inline-block;" class="gameMenuBtn">Return</div>
+        </div>
+    </div>
+    <div id="scoreblipsparent" style="position: relative; top: -1000px; left: 375px; width:1000px;">
+        <div id="team1bliptable" style="display: table;float:left;">
+            <div id="team1blips" style="display:table-row;">
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+            </div>
+        </div>
+        <div style="height: 64px; width: 128px; float: left;font-family:visitorTT1;font-size: 22px; background: url('media/teampoint_middlearea.png');">
+            <div id="team1scorearea" style="float: left; width: 32px;color: #394181;text-align:center;">0</div>
+            <div id="gameclockarea"style="float: left; width: 64px;text-align:center;">0:00</div>
+            <div id="team2scorearea" style="float: left; width: 32px;color: #7e2222;text-align:center;">0</div>
+        </div>
+        <div id="team2bliptable" style="display: table; float: left;">
+            <div id="team2blips" style="display:table-row;">
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+                <div style="display: table-cell ;background-color: #4cff00; height: 32px; width: 32px;"><div style="background: url('media/teampoint_foreground.png'); height: 32px; width: 32px;"></div></div>
+            </div>
+        </div>
+    </div>
+    <div id="endGameParent">
+        <div id="egMenuHeader"><span id="egMenuHeaderText">End Game Information</span></div>
+        <img id="egBannerImg" src="media/endgameBanner_defeat.png" style="height:200px;width:800px;"/>
+        <br />
+        <div id="egTable"  style="display:table;width:100%;">
+            <div style="display:table-row;">
+                <div style="display:table-cell;">Player Name</div>
+                <div style="display:table-cell;">Kills</div>
+                <div style="display:table-cell;">Deaths</div>
+                <div style="display:table-cell;">Assists</div>
+                <div style="display:table-cell;">Damage Given</div>
+                <div style="display:table-cell;">Damage Received</div>
+                <div style="display:table-cell;">Capture Points</div>
+            </div>
+            <div class="endGameRowStyleTeam1">
+                <div style="display:table-cell;">Ben</div>
+                <div style="display:table-cell;">0</div>
+                <div style="display:table-cell;">0</div>
+                <div style="display:table-cell;">0</div>
+                <div style="display:table-cell;">0</div>
+                <div style="display:table-cell;">0</div>
+                <div style="display:table-cell;">0</div>
+            </div>
+            <div class="endGameRowStyleTeam2">
+                <div style="display:table-cell;">Sam</div>
+                <div style="display:table-cell;">0</div>
+                <div style="display:table-cell;">0</div>
+                <div style="display:table-cell;">0</div>
+                <div style="display:table-cell;">0</div>
+                <div style="display:table-cell;">0</div>
+                <div style="display:table-cell;">0</div>
+            </div>
+        </div>
+        <div id="endGameQuitButton" style="display:inline-block;" class="gameMenuBtn">Exit Game</div>
+    </div>
+    <div id="serverConnectionNotice">
+        ERROR!: NO SERVER CONNECTION DETECTED!<br /><br /><br />
+        <div id="serverConnectionNoticeContent">
+        We apologize and are working to get the server back online. We appreciate your patience. Please refresh your window to try to reconnect. -128 Games Staff.
+        <br /><br />
+        <a class="hrefWarning" href="http://www.sonsofmetal.org/wp">128 Games Web Site</a>
+        <br /><br />
+        <a class="hrefWarning" href="https://www.facebook.com/128games">128 Games Facebook Page</a>
+        <br /><br />
+            <div>
+                <img src="media/server1.gif"/>
+            </div>
+        </div>
+
+    </div>
+    <div id="reconnectWarningParent">
+        You were connected to a game. Please wait while we check your status.<br /><br /><br />
+        <div id="reconnectWarningContent">
+            <div id="reconnectYes" class="gameMenuBtnDisabled" style="display:inline-block;">RECONNECT</div>
+            <div id="reconnectNo" class="gameMenuBtn" style="display:inline-block;">DECLINE</div>
+            <div id="reconnectGameInfo">Current Game Information
+                <div style="display:table;width:100%;">
+                    <div style="display:table-row">
+                        <div style="display:table-cell">Game Name</div>
+                        <div style="display:table-cell">Player Count</div>
+                    </div>
+                    <div style="display:table-row">
+                        <div id="reconnectGameName" style="display:table-cell">DERPY GAME</div>
+                        <div id="reconnectGameCount" style="display:table-cell">5/6</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="CreditsScreen">
+        <div id="CreditsScreenHeader"><span id="CreditsScreenHeaderText">Credits</span></div>
+        <div id="CreditsScreenContent">
+            Lead Designer: Benjamin Breitenbach<br /><br /><br />
+            Programmer: Benjamin Breitenbach<br /><br /><br />            
+            Artwork: Benjamin Breitenbach<br />
+                Sam Breitenbach<br />
+                James Pryor<br />
+            Sound and Music: Benjamin Breitenbach<br /> 
+                Sam Breitenbach<br /><br />
+            UI Design: Benjamin Breitenbach <br /><br /><br />           
+            Beta Testing: Benjamin Breitenbach <br /> 
+                Chris Kruse<br />
+                Alan Foster<br />
+                Sam Breitenbach<br />
+                Norman Dotson<br />            
+                Dave Mellick<br />
+            <br /><br /><br /><br />
+            <div id="CreditsScreenCloseBtn" class="gameMenuBtn" style="display:inline-block;">Close</div>
+        </div>
+    </div>
+    <!-- Start of Command Map Setup-->
+    <div id="playMapParent" style="z-index: 21;">
+        Command Map
+        <canvas id="playMapContent" width="180" height="120">
+            MapCOntent
+        </canvas>
+        <div id="playMapBeacon" class="playMapButton">[ ! ]</div>
+        <div id="playMapClose" class="playMapButton">
+            [ X ]
+        </div>
+    </div>
+        <div id="commandMapBtn" class="weaponMenubtn" style="position:absolute;bottom:-1000px;left:16px;height:36px;width:36px;z-index: 20;">
+        <img src="media/icon_globe.png" id="commandMapImg" style="height: 30px; width: 30px;display:inline-block;margin-left: 3px;margin-top:3px;" />
+    </div>
+    <!-- End of Command Map Setup-->
+    <div id="chassisTemplateToggle" title="Save for later use!" class="weaponMenubtn" style="font-size: 24px;position:absolute;bottom:-1000px;left:36px;height: 96px;width:128px;z-index: 20;">
+        Load/Save Chassis Build
+        <img src="media/icon_chassistemplate.png" id="chassisTemplateToggleImg" style="height: 32px; width: 32px;display:inline-block;margin-left: 3px;margin-top:3px;" />
+    </div>
+    <div id="notificationParent">
+        <div id="close_newswindow" class="playMapButton" style="float:right;">
+        [ X ]
+        </div>
+        <div class="tankmenuheaderText" style="width:100%;display:inline-block;">News</div><br />
+        <div id="notificationContent">
+            <div id="fb-root"></div>
+            <script>(function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0]; if (d.getElementById(id)) return; js = d.createElement(s); js.id = id; js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.3"; fjs.parentNode.insertBefore(js, fjs); }(document, 'script', 'facebook-jssdk'));</script>
+            
+            <div class="fb-post" data-href="https://www.facebook.com/128games/posts/1362466560437089" data-width="500"></div>
+
+        </div>
+    </div>
+        <div id="notificationButton" class="weaponMenubtn" title="news" style="position:absolute;top:40px;left:32px;height:36px;width:36px;z-index: 20;">
+        <img src="media/icon_notification.png" id="newsButton" style="height: 32px; width: 32px;display:inline-block;margin-left: 3px;margin-top:3px;" />
+    </div>
+    <!-- Profile Button-->
+    <div id="profileButton" class="weaponMenubtn" title="profile" style="position:absolute;top:40px;right:32px;height:36px;width:36px;z-index: 20;">
+        <img src="media/icon_profile.png" id="probutton" style="height: 32px; width: 32px;display:inline-block;margin-left: 3px;margin-top:3px;" />
+    </div>
+    <div id="userProfileDisplayParent">
+        <div id="close_userProfile" class="playMapButton" style="float:right;">
+        [ X ]
+        </div>
+        <div style="text-align:center;">
+            <div id="lbtoggle" class="weaponMenubtn" style="width:80%;font-size: 24px;height: 24px;display:inline-block;margin-right: 36px;">Leaderboard</div>
+        </div>
+        <div id="userProfileDisplayContent">
+            <div style="display:table;height: 100%;width:100%">
+                <!--ROW1-->
+                <div style="display: table-row;width:100%;">
+                    <div style="display: table-cell;">
+                        <div style="margin: 8px 8px 8px 8px; width: 480px; height: 400px; ">
+                            <div id="profilenickname">Player Nickname</div><div style="float:right;"><div id="profileupdatenameButton"class="weaponMenubtn">Update Name</div></div><br />
+                            <div style="height:32px;width:32px;background: url(../hardpoint_b5/media/profiles/sprites14c32.png) repeat -128px 0;"></div><br /><br /><br />
+                            <!--All rights for creation of profile icons go to AngryMeteor.com under CC-BY 3.0 license-->
+                            <div id="xpnum">100 / 100 XP</div> <br />
+                            <div style="background: #5a5757;border-radius: 8px;width: 300px;"><div id="xpbar"></div></div>    <br />
+                            <br /><br /><br />
+                            <div class="profileRowtext1">Games Played:<div id="profileGamesPlayed" style="float:right;padding-right: 16px;">0</div></div> 
+                            <div class="profileRowtext2">Wins:<div id="profileWins" style="float:right;padding-right: 16px;">0</div></div>
+                            <div class="profileRowtext1">Loses:<div id="profileLosses" style="float:right;padding-right: 16px;">0</div></div>
+                            <div class="profileRowtext2">Disconnects:<div id="profileDisconnects" style="float:right;padding-right: 16px;">0</div></div>
+                            <div class="profileRowtext1">Kicks:<div id="profileKicks" style="float:right;padding-right: 16px;">0</div></div>  
+                        </div>
+                    </div>   
+                    <div style="display: table-cell;">
+                        <div id="matchhistoryparent">
+                            Match History:<br />
+                            <div id="matchhistorytable" style="display:table;width:100%;">
+         
+                            </div>
+                        </div>
+                    </div> 
+                </div>
+                <!--ROW2-->
+                <div style="display: table-row;width:100%; border: solid #FFFFFF 2px;">
+                    <div style="display: table-cell;">
+                        <div style="margin: 8px 8px 8px 8px; width: 480px; height: 300px; ">
+                            Player Career Stats<br />
+                            <div class="profileRowtext1">Kills:<div id="profileKills" style="float:right;padding-right: 16px;">0</div></div>
+                            <div class="profileRowtext2">Deaths:<div id="profileDeaths" style="float: right; padding-right: 16px;">0</div></div>
+                            <div class="profileRowtext1">Assists:<div id="profileAssists" style="float: right; padding-right: 16px;">0</div></div>
+                            <div class="profileRowtext2">K/D Ratio:<div id="profileRatio" style="float: right; padding-right: 16px;">0</div></div>
+                            <div class="profileRowtext1">Damage Done:<div id="profileDamDone" style="float: right; padding-right: 16px;">0</div></div> 
+                            <div class="profileRowtext2">Damage Rcvd:<div id="profileDamRcvd" style="float: right; padding-right: 16px;">0</div></div> 
+                            <div class="profileRowtext1">Capture Points:<div id="profileCaps" style="float: right; padding-right: 16px;">0</div></div>
+                        </div>
+                    </div>
+                    <div style="display: table-cell;">
+                        <div style="margin: 8px 8px 8px 8px; width: 480px; height: 300px;">
+                            Friends:<br />
+                            <div style="display:table; width: 100%;">
+                                
+                                <div style="display:table-row; width: 100%;">
+                                    <div style="display:table-cell;">
+                                        <span class="profileRowtext2" style="border: solid #FFFFFF 1px; width: 100%;">Search for Friend:<input id="friendsearchinput" type="text"/><input id="friendsearchbutton" type="button" value="request"/></span>
+                                        <span id="frienderrors" error="false"><!-- ERROR WARNING IF NO FRIEND EXISTS--></span>
+                                    </div>
+                                </div>
+                                <div style="display:table-row; width: 100%;"><div style="display:table-cell;"><span style="width: 100%;height:34px;background: #5a5757;"></span></div></div>
+                                <div style="display:table-row; width: 100%;">
+                                    <div style="display:table-cell;">
+                                        <div id="friendlist" style="display:table;border: solid #FFFFFF 2px; width: 400px;"></div>            
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div id="playerNameParent" style="text-align:center;">      
+        <div id="playerNameAlert" style="display:inline-block;">Welcome to Hardpoint: Please provide an ingame name.</div>  
+        <input id="playernamebox" value="Newbie" type="text" title="Enter Player Name" pattern="[a-zA-Z0-9]+" maxlength="15" style="margin-left:auto;margin-right:auto;width:60%;"/>
+        <div id="badnamewarning" style="display:inline-block;font-size:smaller;color:#cf0e0e;margin-left:auto;margin-right:auto;width:60%;"></div>
+        <div id="selectName" style="display:inline-block;margin-left:auto;margin-right:auto;width:60%;">UPDATE</div>
+        <div id="closeName" style="display:inline-block;margin-left:auto;margin-right:auto;width:60%;">CANCEL</div>
+    </div>
+    <div id="openChatButton" class="weaponMenubtn" style="position:absolute;bottom:-1000px;height:36px;width:36px;z-index: 20;">
+        <img src="media/icon_chat.png" id="chatareabuttonimg" style="height: 30px; width: 30px;display:inline-block;margin-left: 3px;margin-top:3px;" />
+    </div>
+    
+    <div id="pstatshoverParent">
+        <table>
+            <tr>
+                <td>Wins:</td><td id="pstatsWins"></td>
+            </tr>
+            <tr>
+                <td>Loses:</td><td id="pstatsLoses"></td>
+            </tr>
+            <tr>
+                <td>Kicks:</td><td id="pstatsKicks"></td>
+            </tr>
+            <tr>
+                <td>Level:</td><td id="pstatsLevel"></td>
+            </tr>
+        </table>
+    </div>
+    <div id="perkboardparent">
+         <table cellpadding="50" cellspacing="25" style="width:100%;">
+             <tr>
+                <td style="width:100%;text-align:center;">
+                <div class="perksTitle" style="display:inline-block;"><span class="tankmenuheaderText">Drop Perks Here</span></div> <br />
+                <div style="display:inline-block;width:100%;">
+                <div style="display:table;margin-left:auto;margin-right:auto;">
+                    <div style="display:table-row;">
+                        <div class="perkbox1" style="display:table-cell;" id="perkselected1"></div>
+                        <div class="perkbox2" style="display:table-cell;" id="perkselected2"></div>
+                        <div class="perkbox3" style="display:table-cell;" id="perkselected3"></div>
+                        </div>
+                    </div>
+                </div>
+                 </td>
+             </tr>
+             <tr>
+                 <td id="perkboardinfopanel" style="padding: 12px 12px 12px 12px;">Click a perk to get more information.</td>
+             </tr>
+                <tr>
+                 <td id="perkboardinfobonuses" style="padding: 12px 12px 12px 12px;"></td>
+             </tr>
+        </table>
+    </div>
+    <div id="infoboardparent">
+            Tank selected
+            <table cellpadding="50" cellspacing="25">
+                <tr>
+                    <td style="width: 200px; height: 375px;overflow:auto;">
+                        <div id="infoboardleftpanel" style="width: 190px;overflow:auto;">
+                        THis is some test information. Really, it will be detailed information on the tank. It will describe the overall tank attributes.
+                        </div>
+                    </td>
+                    <td style="width: 200px; height: 375px;overflow:auto;">
+                        <div style="width: 190px;overflow-x:hidden;">
+                            Health:<div info="How much damage your tank can sustain before being destroyed." id="tankChassisStat_Hull" class="tankstatbar1"></div><br />
+                            Movement Speed:<div info="How fast your tank can move." id="tankChassisStat_MoveSpeed" class="tankstatbar1"></div><br />
+                            Reverse Gear:<div info="How fast your tank can reverse." id="tankChassisStat_Reverse" class="tankstatbar1"></div><br />
+                            Optics:<div info="How far away before the fog of war obscures your vision" id="tankChassisStat_Optics" class="tankstatbar1"></div><br />
+                            Noise:<div info="How far away this tank is detected on radar" id="tankChassisStat_Stealth" class="tankstatbar1"></div><br />
+                            Armor(Front):<div info="Reduces damage from attacks to the front." id="tankChassisStat_arf" class="tankstatbar1"></div><br />
+                            Armor(Left):<div info="Reduces damage from attacks to the Left." id="tankChassisStat_arl" class="tankstatbar1"></div><br />
+                            Armor(Right):<div info="Reduces damage from attacks to the Right." id="tankChassisStat_arr" class="tankstatbar1"></div><br />
+                            Armor(Back):<div info="Reduces damage from attacks to the Back." id="tankChassisStat_arb" class="tankstatbar1"></div><br />
+                        </div>
+                    </td>
+                    <td style="width: 200px; height: 375px;">
+                        <img id="inforboardabilityimage" src="media/design/Scout_Gif.gif" height="160" width="240" />
+                        <div id="infoboardrightpanel" >TANK ABILITY: Turn and Burn<hr />The Scout gains increased speed and drops explosive mines, detering any followers.</div>
+                    </td>
+                </tr>
+            </table>
+    </div>
+    <div id="selecttanks" class="designbar">
+        <div class="designbarheader">
+            <span class="designbartext">Available Tanks</span>
+        </div>
+        <div class="designbarcontent">
+            <table style="height: 64px; width: 100%;" cellpadding="0" cellspacing="0">
+                <tr >
+                    <td style="height: 32px; line-height: 16px;">
+                        <div class="designbarbutton" style="display:inline-block;background: url('media/tankchass_sheet_64.png') 0px -32px;" tank="0">  </div>
+                        <div class="designbarbutton" style="display:inline-block;background: url('media/tankchass_sheet_64.png') 0px -64px;" tank="1">  </div>
+                        <div class="designbarbutton" style="display:inline-block;background: url('media/tankchass_sheet_64.png') 0px -96px;" tank="2">  </div>
+                        <div class="designbarbutton" style="display:inline-block;background: url('media/tankchass_sheet_64.png') 0px -128px;" tank="3">  </div>
+                        <div class="designbarbutton" style="display:inline-block;background: url('media/tankchass_sheet_64.png') 0px -160px;" tank="4">  </div>
+                        <div class="designbarbutton" style="display:inline-block;background: url('media/tankchass_sheet_64.png') 0px -192px;" tank="5">  </div>
+                        <div class="designbarbutton" style="display:inline-block;background: url('media/tankchass_sheet_64.png') 0px -224px;" tank="6">  </div>
+                        <div class="designbarbutton" style="display:inline-block;background: url('media/tankchass_sheet_64.png') 0px -256px;" tank="7">  </div>
+                        <div class="designbarbutton" style="display:inline-block;background: url('media/tankchass_sheet_64.png') 0px -288px;" tank="8">  </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="height:32px;line-height:32px;">
+                        <div class="designbarbutton" style="display: inline-block; height: 24px; width: 64px;">Scout</div>
+                        <div class="designbarbutton" style="font-size: 10px; display: inline-block; height: 24px; width: 64px;">Intercepter</div>
+                        <div class="designbarbutton" style="display: inline-block; height: 24px; width: 64px;">Gladiator</div>
+                        <div class="designbarbutton" style="display: inline-block; height: 24px; width: 64px;">Defender</div>
+                        <div class="designbarbutton" style="display: inline-block; height: 24px; width: 64px;">Rhino</div>
+                        <div class="designbarbutton" style="display: inline-block; height: 24px; width: 64px;">Backjack</div>
+                        <div class="designbarbutton" style="display: inline-block; height: 24px; width: 64px;">Patton</div>
+                        <div class="designbarbutton" style="display: inline-block; height: 24px; width: 64px;">MRL</div>
+                        <div class="designbarbutton" style="display: inline-block; height: 24px; width: 64px;">JMY</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div id="selectweapons" class="designbar">
+        <div class="designbarheader">
+            <span class="designbartext">Available Weapons</span>
+        </div>
+        <div class="designbarcontent">
+            <table style="height: 64px; width: 100%;" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td id="weaponloadarea" style="height: 32px; line-height: 32px;">
+                        <div class="designbarbutton" style="display: inline-block; width: 96px; height: 64px; background: url('media/weapons64.png') 0px -0px; " weapon="0">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 96px; height: 64px; background: url('media/weapons64.png') 0px -64px; " weapon="1">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 96px; height: 64px; background: url('media/weapons64.png') 0px -128px; " weapon="2">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 96px; height: 64px; background: url('media/weapons64.png') 0px -192px; " weapon="3">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 96px; height: 64px; background: url('media/weapons64.png') 0px -256px; " weapon="4">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 96px; height: 64px; background: url('media/weapons64.png') 0px -320px; " weapon="5">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 96px; height: 64px; background: url('media/weapons64.png') 0px -384px; " weapon="6">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 96px; height: 64px; background: url('media/weapons64.png') 0px -448px; " weapon="7">  </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div id="selectperks" class="designbar" style="height:244px; width: 512px;">
+        <div class="designbarheader">
+            <span class="designbartext">Available Perks</span>
+        </div>
+        <div class="designbarcontent" style="height:232px;width: 488px;">
+            
+            <table style="height: 204px; width: 100%;" cellpadding="0" cellspacing="0">
+                <tr>                    
+                    <td id="perkloadarea" style="line-height: 32px;">
+                        <div class="designbarbutton" style="display: inline-block; width: 64px; height: 64px; background: url('media/antiperksx64.png') 0px -0px; " perk="0">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 64px; height: 64px; background: url('media/antiperksx64.png') 0px -64px; " perk="1">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 64px; height: 64px; background: url('media/antiperksx64.png') 0px -128px; " perk="2">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 64px; height: 64px; background: url('media/antiperksx64.png') 0px -192px; " perk="3">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 64px; height: 64px; background: url('media/antiperksx64.png') 0px -256px; " perk="4">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 64px; height: 64px; background: url('media/antiperksx64.png') 0px -320px; " perk="5">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 64px; height: 64px; background: url('media/antiperksx64.png') 0px -384px; " perk="6">  </div>
+                        <div class="designbarbutton" style="display: inline-block; width: 64px; height: 64px; background: url('media/antiperksx64.png') 0px -448px; " perk="7">  </div>
+                    </td>                    
+                </tr>
+            </table>
+            
+        </div>
+    </div>
+    <div id="chassisTemplateParent">
+        <div id="close_chassistemplates" class="playMapButton" style="float:right;">
+        [ X ]
+        </div>
+        <div class="tankmenuheaderText" style="width:100%;display:inline-block;">Saved Loadouts</div><br />
+        <div style="display:inline-block">
+            <div id="chassistemplatecontent" style=" display: table;">
+           </div>
+        </div>
+        <br />
+        <div style="display:inline-block">
+            Tank:<div id="chassisTemplateDescTank"></div> <br />
+            Weapons:<div id="chassisTemplateDescWeapons"></div> <br />
+            Perks: <div id="chassisTemplateDescPerks"></div><br />
+        </div>
+        <br>
+        <input id="chassisTemplateSaveName" value="Enter a Save Name" type="text" title="Enter Save Name" pattern="[a-zA-Z0-9]+" maxlength="15" style="margin-left:auto;margin-right:auto;width:30%;"/><br />
+        <div id="chassisTemplateSave" class="perkButton" style="display:inline-block;width:96px;">Save</div>
+        <div id="chassisTemplateLoad" class="perkButton" style="display:inline-block;width:96px;">Load</div>
+        <div id="chassisTemplateRemove" class="perkButton" style="display:inline-block;width:96px;">Remove</div>
+    </div>
+    <div id="infowindow"></div>
+    <div id="tipsParent">        
+        <div id="tipsContent">
+            <img id="tipsImage" src="media/tips/hardpointstatus.PNG" height="200" width="304" style="padding:8px 8px 8px 8px" />
+            <br />
+            <div id="tipdata" style="text-align:left;">Some tip data on the picture can go here.</div>
+            <div id="tipprev" style="display:inline-block;" class="playMapButton">Prev</div>
+            <div id="tipclose" style="display:inline-block;" class="playMapButton">[ X ]</div>
+            <div id="tipnext" style="display:inline-block;" class="playMapButton">Next</div>
+         </div>
+    </div>
+    <div id="deathrecap">
+    <!-- Leaderboard -->
+    <div id="leaderboard">
+        <div style="display:inline;">Leaderboard        
+            <div id="close_leaderboard" class="playMapButton" style="float:right;">
+            [ X ]
+            </div>
+        </div>
+        <div id="lbselector">
+            <select id="lbqueryvals" class='lbselector'>
+                <option value="xp">Most XP</option>
+                <option value="kdr">Best KD Ratio</option>
+                <option value="kill">Most Kills</option>
+                <option value="win">Most Wins</option>
+                <option value="off">Most Offense</option>
+                <option value="def">Most Defense</option>
+                <option value="obj">Most Objectives</option>
+            </select>
+        </div>
+        <div style="display:table;width: 960px;">
+            <div style="display:table-row;" class="lbrow"><div style="display:table-cell;width:440px" class="lbheader">Player</div><div style="display:table-cell;" class="lbheader">Data</div></div>
+        </div>
+        <div id="lbcontainer">
+        <div id="lbcontent">            
+            
+        </div>  
+        </div>      
+    </div>
+    </div>
+    <div id="loadingscreen" style="z-index: 99;">
+        <img id="loadingicon" src="media/design/gearloader1.gif" height="64" width="64"  style="position:absolute;" />
+        <div id="loadingtext" style="position:absolute;" >Loading...</div>
+        <div id="loadingbar" style="position:absolute;" ></div>
+        <div id="loadingquote" style="position:absolute;"></div>
+    </div>
+    <script type="text/javascript">
+        //Post Game Functions
+        window.onbeforeunload = function () {
+            //Create timestamp of last time the game was closed.
+            localStorage.setItem("LastPlayed", Date.now());
+        }
+        window.onunload = function () {
+        }
+        //Fullscreen
+        function launchIntoFullscreen(element) {
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.mozRequestFullScreen) {
+                element.mozRequestFullScreen();
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
+            }
+        }
+
+        var jq = document.createElement('script');
+        jq.onload = function () {
+            // script loaded successfully
+            console.log("Connection Succeeded: Server Online");
+
+        }
+
+        jq.onerror = function () {
+            // script error
+            console.log("Connection Error: No resource");
+            $("#serverConnectionNotice").css("top", "100px");
+        }
+        var timeNow = Date.now();
+        jq.type = 'text/javascript';
+        //jq.src = 'http://localhost:1337/socket.io/socket.io.js?' + timeNow;
+        jq.src = 'http://game-128ghardpoint.rhcloud.com:8000/socket.io/socket.io.js?' + timeNow;
+        document.getElementsByTagName('head')[0].appendChild(jq);
+
+        //Chat Dragging Feature
+        var chatdragging = false;
+        $('#chatlogdragtop').mousedown(function (e) {
+            e.preventDefault();
+
+            chatdragging = true;
+            var parent = $('#chatparent');
+            var textarea = $('#chatLog');
+            var playerarea = $("#chatlogplayerlistparent");
+            $(document).mousemove(function (e) {
+                if (($(window).height() - e.pageY) > 32 && (($(window).height() - e.pageY)) < $(window).height()) {
+                    parent.css({
+                        height: ($(window).height() - e.pageY) + "px"
+                    });
+                    textarea.css({
+                        height: (parent.height() - 140) + "px"
+                    })
+                    playerarea.css({
+                        height: (parent.height() - 140) + "px"
+                    })
+                }
+            });
+
+
+        });
+        //Loading screen dim
+        $("#loadingscreen").css({
+            height: $(window).height() + "px",            
+            width: $(window).width() + "px"
+        })        
+        $("#loadingicon").css({
+            top: ($(window).height()/2 - 32) + "px",            
+            left: ($(window).width()/2 -32) + "px"
+        })
+        $("#loadingtext").css({
+            top: ($(window).height()/2 - $("#loadingtext").height()/2 + 96) + "px",            
+            left: ($(window).width()/2- $("#loadingtext").width()/2) + "px"
+        }) 
+        $("#loadingbar").css({
+            top: ($(window).height()/2 - $("#loadingtext").height()/2 + 128) + "px",            
+            left: ($(window).width()/2- $("#loadingtext").width()/2 - 200) + "px"
+        })        
+        $("#loadingquote").css({
+            width: "300px",
+            bottom: 200 + "px",            
+            left: ($(window).width()/2- $("#loadingquote").width()/2) + "px"
+        })
+        //Chat dragger
+        $(document).mouseup(function (e) {
+            if (chatdragging) {
+                chatdragging = false;
+                $(document).unbind('mousemove');
+            }
+        });
+        function optMenuSetBarPosition(button, bar) {
+            var newleft = $(button).position().left + 10;
+            $(bar).css("left", newleft + "px");
+        }
+        function setMiniMapSelectionBarPosition(buttonObj) {
+            var newleft = $(buttonObj).position().left + 10;
+            $("#optMenu_mmselectbar").css("left", newleft + "px");
+        }
+        //Set Initial
+        optMenuSetBarPosition($("#optMenu_mmleft"), $("#optMenu_mmselectbar"));
+        $("#optMenu_mmright").click(function () {
+            optMenuSetBarPosition($("#optMenu_mmright"), $("#optMenu_mmselectbar"));
+            ig.global.radarLocation.applied = (window.innerWidth - (window.innerWidth / 16 * ig.system.scale) - 0);
+        });
+        $("#optMenu_mmcenter").click(function () {
+            optMenuSetBarPosition($("#optMenu_mmcenter"), $("#optMenu_mmselectbar"));
+            ig.global.radarLocation.applied = (window.innerWidth / 2) - (window.innerWidth / 16 * ig.system.scale / 2);
+        });
+        $("#optMenu_mmleft").click(function () {
+            optMenuSetBarPosition($("#optMenu_mmleft"), $("#optMenu_mmselectbar"));
+            ig.global.radarLocation.applied = 32;
+        });
+
+        function setParticleSelectionBarPosition(buttonObj) {
+            var newleft = $(buttonObj).position().left + 10;
+            $("#optMenu_partselectbar").css("left", newleft + "px");
+        }
+        //Set Initial
+        optMenuSetBarPosition($("#optMenu_parEffNormal"), $("#optMenu_partselectbar"));
+        $("#optMenu_parEffOff").click(function () {
+            optMenuSetBarPosition($("#optMenu_parEffOff"), $("#optMenu_partselectbar"));
+            ig.global.particleCount.applied = 0;
+        });
+        $("#optMenu_parEffLow").click(function () {
+            optMenuSetBarPosition($("#optMenu_parEffLow"), $("#optMenu_partselectbar"));
+            ig.global.particleCount.applied = 1;
+        });
+        $("#optMenu_parEffNormal").click(function () {
+            optMenuSetBarPosition($("#optMenu_parEffNormal"), $("#optMenu_partselectbar"));
+            ig.global.particleCount.applied = 3;
+        });
+
+        //Controls Menu Open Click
+        $("#optMenuControlsOpen").click(function () {
+            $("#controlsMenuParent").css("top", 100 + "px");
+        });
+        $("#controlsMenuQuit").click(function () {
+            $("#controlsMenuParent").css("top", -1000 + "px");
+        });
+        //Tips Options
+        optMenuSetBarPosition($("#optMenu_tipsOn"), $("#optMenu_tipsselectbar"));
+        $("#optMenu_tipsOff").click(function () {
+            optMenuSetBarPosition($("#optMenu_tipsOff"), $("#optMenu_tipsselectbar"));
+            ig.global.tipsEnabled.applied = false;
+        });
+        $("#optMenu_tipsOn").click(function () {
+            optMenuSetBarPosition($("#optMenu_tipsOn"), $("#optMenu_tipsselectbar"));
+            ig.global.tipsEnabled.applied = true;
+        });
+        //Tips Close
+        $("#tipclose").click(function () {
+            $("#tipsParent").css("top", -1000 + "px");
+        });
+        $("#tipprev").click(function () {
+            if (ig.global.currentTip != undefined) {
+                var prevtip = ig.global.currentTip - 1;
+                if (prevtip < 0) { prevtip = ig.global.tips.length - 1 };
+                ig.game.getTip(prevtip, $("#tipsParent").offset.left, $("#tipsParent").offset.top, true);
+            }
+        });
+        $("#tipnext").click(function () {
+            if (ig.global.currentTip != undefined) {
+                var nexttip = ig.global.currentTip + 1;
+                if (nexttip > ig.global.tips.length - 1) { nexttip = 0 };
+                ig.game.getTip(nexttip, $("#tipsParent").offset.left, $("#tipsParent").offset.top, true);
+            }
+        });
+        $("#tipsParent").draggable({
+            containment: 'window',
+            scroll: false
+        });
+        //Quit Game Button
+        
+        $("#endGameQuitButton").click(function () {
+            location.reload(true)
+        });
+
+        //Setup initial positions based on width
+        
+        $("#chassisTemplateParent").css("left", (window.innerWidth / 2 - 320) + "px");
+        $("#CreditsScreen").css("left", (window.innerWidth / 2 - 400) + "px");
+        $("#serverConnectionNotice").css("left", (window.innerWidth / 2 - 400) + "px");
+        $("#optionsMenuParent").css("left", (window.innerWidth / 2 - 400) + "px");
+        $("#controlsMenuParent").css("left", (window.innerWidth / 2 - 300) + "px");
+        $("#scoreblipsparent").css("left", (window.innerWidth / 2 - 250) + "px");
+        $("#endGameParent").css("left", (window.innerWidth / 2 - 400) + "px");
+        $("#reconnectWarningParent").css("left", (window.innerWidth / 2 - 400) + "px");
+        $("#notificationParent").css("left", (window.innerWidth / 2 - 320) + "px");
+        $("#userProfileDisplayParent").css("left", (window.innerWidth / 2 - 520) + "px");
+        $("#userProfileDisplayParent").css("height", (window.innerHeight - 80) + "px");
+        $("#openChatButton").css("bottom", 36 + "px");
+        $("#openChatButton").css("right", 36 + "px");
+
+        //New Draggable
+        $("#notificationParent").draggable({ containment: "window" });
+
+        //setup chat button toggle
+        $("#openChatButton").click(function () {
+            var left = $("#chatparent").offset().left;
+            //console.log(left);
+            if (left < 0) {
+                //console.log(($(window).width() - 32) + "0px")
+                $("#chatparent").css("left", ($(window).width() - 32 - $("#chatparent").width()) + "px");
+
+            } else {
+
+                $("#chatparent").css("left", "-3000px");
+                $("#chatparent").css("width", "480px");
+                $("#chatparent").css("height", "240px");
+            }
+        });
+        //Setup News toggle
+        $("#notificationButton").click(function () {
+            var top = $("#notificationParent").offset().top;
+            if (top < 0) {
+                $("#notificationParent").css("top", "0px");
+
+            } else {
+                $("#notificationParent").css("top", "-1000px");
+            }
+        });
+        //Setup Profile toggle
+        $("#profileButton").click(function () {
+            var top = $("#userProfileDisplayParent").offset().top;
+            if (top < 0) {
+                $("#userProfileDisplayParent").css("top", "40px");
+
+            } else {
+                $("#userProfileDisplayParent").css("top", "-1000px");
+            }
+        });
+        //setup options menu click
+        $("#ogamebutton").click(function () {
+            $("#optionsMenuParent").css("top", 12 + "px");
+        });
+
+        $("#optMenuClose").click(function () {
+            $("#optionsMenuParent").css("top", -1000 + "px");
+            //reset sounds
+            for (var i = soundManager.soundIDs.length - 1; i >= 0; i--) {
+                
+                //Add spliting method for effect_name, sound_name, menu_name, music_name
+                var idCategory = soundManager.soundIDs[i].split("_");
+                if (idCategory[0] == 'music') {
+                    soundManager.sounds[soundManager.soundIDs[i]].setVolume(ig.global.musicMaster.current);
+                } else {
+                    soundManager.sounds[soundManager.soundIDs[i]].setVolume(ig.global.soundMaster.current);
+                }
+            }
+            //reset music (need array for this)
+        });
+        
+        $("#optMenuQuit").click(function () {
+            location.reload(true);
+        });
+        $("#optMenuApply").click(function () {
+            $("#optionsMenuParent").css("top", -1000 + "px");
+            //console.log("Apply options menu");
+            ig.global.soundMaster.current = ig.global.soundMaster.applied;
+            ig.global.musicMaster.current = ig.global.musicMaster.applied;
+            ig.global.radarLocation.current = ig.global.radarLocation.applied;
+            ig.global.particleCount.current = ig.global.particleCount.applied;
+            ig.global.tipsEnabled.current = ig.global.tipsEnabled.applied;
+            //Allow local storage call to setup saved settings
+            var opts = {
+                sound: ig.global.soundMaster.current,
+                music: ig.global.musicMaster.current,
+                radarLocation: ig.global.radarLocation.current,
+                particleCount: ig.global.particleCount.current,
+                tips: ig.global.tipsEnabled.current
+            }
+            localStorage.setItem("hardpointoptions", JSON.stringify(opts));
+
+        });
+        //option menu sound listeners
+        $('#slider_sound').on("change mousemove", function () {
+            $('#optMenu_soundlevel').html($(this).val());
+            ig.global.soundMaster.applied = $(this).val();
+            for (var i = soundManager.soundIDs.length - 1; i >= 0; i--) {
+                var idCategory = soundManager.soundIDs[i].split("_");
+                if (idCategory[0] != 'music') {
+                    soundManager.sounds[soundManager.soundIDs[i]].setVolume($(this).val());
+                }
+            }
+        });
+        $('#slider_music').on("change mousemove", function () {
+            $('#optMenu_musiclevel').html($(this).val());
+            ig.global.musicMaster.applied = $(this).val();
+            for (var i = soundManager.soundIDs.length - 1; i >= 0; i--) {
+                var idCategory = soundManager.soundIDs[i].split("_");
+                if (idCategory[0] == 'music') {
+                    soundManager.sounds[soundManager.soundIDs[i]].setVolume($(this).val());
+                }
+            }
+            //Just set theme music
+        });
+        $("#KickedAlert").click(function () {
+            $("#KickedAlert").css("top", "-200px");
+        });
+
+        $("#mainmenu").css("left", (window.innerWidth / 2 - 200) + "px");
+        $("#createGameParent").css("left", (window.innerWidth / 2 - 400) + "px");
+        $("#GameBrowserParent").css("left", (window.innerWidth / 2 - 400) + "px");
+        $("#weaponInventory").css("left", (window.innerWidth / 2 - 480) + "px");//120 from the picture background, 256 from the table width
+        $("#perkInventory").css("left", (window.innerWidth / 2 - 480) + "px");
+        $("#playerNameParent").css("left", (window.innerWidth / 2 - 200) + "px");
+        //Set dimensions based on window size
+        $("#gameBorderLeft").css("height", window.innerHeight);
+        $("#gameBorderRight").css("height", window.innerHeight);
+        $("#gameBorderTop").css("width", window.innerWidth);
+        $("#gameBorderBottom").css("width", window.innerWidth);
+
+
+        //Hide scrollbars
+        $("body").css("overflow", "hidden");
+        //Adjust Initial Positions
+        //post Function
+        function post(path, params, method) {
+            method = method || "post"; // Set method to post by default if not specified.
+
+            // The rest of this code assumes you are not using a library.
+            // It can be made less wordy if you use one.
+            var form = document.createElement("form");
+            form.setAttribute("method", method);
+            form.setAttribute("action", path);
+
+            for (var key in params) {
+                if (params.hasOwnProperty(key)) {
+                    var hiddenField = document.createElement("input");
+                    hiddenField.setAttribute("type", "hidden");
+                    hiddenField.setAttribute("name", key);
+                    hiddenField.setAttribute("value", params[key]);
+
+                    form.appendChild(hiddenField);
+                }
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+        //Input Boxes do not allow special charactesr to be typed
+        $("#gamenamebox").on('change keyup paste', function () {
+
+            var characterReg = /^[a-zA-Z0-9]+$/;//^[a-zA-Z0-9]+$ /[^a-zA-Z0-9]/g
+            if (!characterReg.test($("#gamenamebox").val())) {
+                var newstring = $("#gamenamebox").val().replace(/[^a-zA-Z0-9]/g, "");
+                $('#nogamenamewarning').html('<span">Only Alphanumeric characters allowed.</span>');
+                $("#gamenamebox").val(newstring);
+            }
+        });
+        $("#playernamebox").on('change keyup paste', function () {
+
+            var characterReg = /^[a-zA-Z0-9]+$/;//^[a-zA-Z0-9]+$ /[^a-zA-Z0-9]/g
+            if (!characterReg.test($("#playernamebox").val())) {
+                var newstring = $("#playernamebox").val().replace(/[^a-zA-Z0-9]/g, "");
+                $('#badnamewarning').html('<span">Only Alphanumeric characters allowed.</span>');
+                $("#playernamebox").val(newstring);
+            }
+
+        });
+
+        //Chat Send on Enter key
+        $("#chatarea").keypress(function (e) {
+            if (e.which == 13) {
+                if (ig.global.chatcount < 5) {
+                    ig.global.chatcount++;
+                    var characterReg = /^\s*[a-zA-Z0-9.!?/@#$%-,\s]+\s*$/;//^[a-zA-Z0-9.-]+$
+
+                    if (!characterReg.test($("#chatarea").val())) {
+                        $('#chatparent').before('<span">Only certain special characters allowed.</span>');
+                    } else {
+                        //ig.game.gamesocket.announce({ text: ig.game.player.playerName + " : " + $("#chatarea").val() });
+                        if (ig.game.socket != undefined) {
+                            ig.game.socket.emit('chatLobbySend', { id: ig.game.socketid, alias: ig.global.login.alias, msg: $("#chatarea").val() });
+                        } else {
+                            ig.game.gamesocket.socket.emit('chatLobbySendInGame', { id: ig.game.socketid, room: ig.global.SocketRoom, alias: ig.global.login.alias, msg: $("#chatarea").val() });
+                        }
+                    }
+                    $("#chatarea").val("");
+                    return false;
+                } else {
+                    $warning = "<div style=\"display:table-row;width:100%;\"><div style=\"color:#44FFFF;\">SPAM FILTER ACTIVE</div></div>";
+                    $("#chatlogTable").append($warning);
+                    $('#chatLog').scrollTop($('#chatLog')[0].scrollHeight);
+                    //$('#chatparent').before('<span">SPAM FILTER ACTIVE: PLEASE WAIT BEFORE NEXT MESSAGE!</span>');
+                    return false;
+                }
+            }
+        });
+        $(document).keypress(function (e) {
+            if (e.which == 13) {
+
+                var left = $("#chatparent").offset().left;
+                //console.log(bottom);
+                if (left < 0) {
+                    //open chat if less than zero
+                    $("#chatparent").css("left", ($(window).width() - 32 - $("#chatparent").width()) + "px");
+                    $("#chatarea").focus();
+                }
+            }
+        });
+        //Close menu buttons
+        $("#close_userProfile").click(function () {
+            $("#userProfileDisplayParent").css("top", "-1000px");
+        });
+        $("#close_chatwindow").click(function () {
+            $("#chatparent").css("left", "-3000px");
+        });
+        $("#close_newswindow").click(function () {
+            $("#notificationParent").css("top", "-1000px");
+        });
+        $("#close_chassistemplates").click(function () {
+            $("#chassisTemplateParent").css("top", "-1000px");
+        });
+        
+        
+ 
+        $(".weaponMenubtn").mouseup(function() {
+                   //Add click sounds to buttons
+            var button1Click = soundManager.createSound({
+                    id: 'sound_button1',
+                    url: './media/sounds/Button_1.mp3',
+                    volume: 100,
+                });
+            button1Click.play();
+        });
+        
+        $(".gameMenuBtn").mouseup(function() {
+                   //Add click sounds to buttons
+            var button1Click = soundManager.createSound({
+                    id: 'sound_button1',
+                    url: './media/sounds/Button_1.mp3',
+                    volume: 100,
+                });
+            button1Click.play();
+        });
+        //Fullscreen function
+        function toggleFullScreen() {
+            if (!document.fullscreenElement &&    // alternative standard method
+                !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {  // current working methods
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                } else if (document.documentElement.mozRequestFullScreen) {
+                    document.documentElement.mozRequestFullScreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+        //toggleFullScreen();
+        function randomQuote() {
+            var quoteArray = ['"War is Hell and Hell is Hell, and of the two war is worse. There are no innocents in Hell, but war is chalk full of um." - Hawkeye', "It is well that war is so terrible – otherwise we would grow too fond of it.", "No dumb bastard ever won a war by going out and dying for his country. He won it by making some other dumb bastard die for his country."];
+            var rand = Math.floor(Math.random() * (quoteArray.length - (0)) + (0));
+            var quote = quoteArray[rand];
+            //console.log("randQuote", rand, quote);
+            $("#loadingquote").html(quote);
+            $("#loadingquote").css({                
+                left: ($(window).width() / 2 - $("#loadingquote").width() / 2) + "px"
+            })
+        }
+       
+
+    </script>
+    <!-- PRELOAD DIV IMAGES FOR FASTER CALLS-->
+    <div id="preload">
+        <img src="media/tips/playtstats.PNG" width="1" height="1" alt="Image 01" />
+        <img src="media/tips/objectivepoints.PNG" width="1" height="1" alt="Image 02" />
+        <img src="media/tips/tutorial_driving.png" width="1" height="1" alt="Image 03" />
+        <img src="media/tips/tutorial_aimming.png" width="1" height="1" alt="Image 04" />
+        <img src="media/tips/weapongroups.png" width="1" height="1" alt="Image 05" />
+        <img src="media/tips/tutorial_fullscreen.png" width="1" height="1" alt="Image 06" />
+        <img src="media/tips/selecttankchassis.PNG" width="1" height="1" alt="Image 07" />
+        <img src="media/tips/perks.png" width="1" height="1" alt="Image 08" />
+    </div>
+</body>
+
+</html>

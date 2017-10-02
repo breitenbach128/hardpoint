@@ -1,0 +1,77 @@
+﻿html,body {
+	background-color: #222;   
+	color: #fff;
+	font-family: helvetica, arial, sans-serif;
+    width:  100%;
+    height: 100%;
+	margin: 0;
+	padding: 0;
+	font-size: 12pt;
+}
+
+.backgroundGeneral1 {
+    background-color: #512121;
+    border: solid #222020 2px;
+    font-family: 'visitorTT1'; 
+    margin: 8px, 8px, 8px, 8px;   
+    border-radius: 8px 8px 8px 8px; 
+	font-size:20px;   
+    
+}
+.headertext1 {
+    position: inherit;
+    -moz-box-shadow:inset 0px 1px 6px 1px #000000;
+    -webkit-box-shadow:inset 0px 1px 6px 1px #000000;
+	box-shadow:inset 0px 1px 6px 1px #000000;
+	background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #9e1414), color-stop(1, #570505));
+	background:-moz-linear-gradient(top, #9e1414 5%, #570505 100%);
+	background:-webkit-linear-gradient(top, #9e1414 5%, #570505 100%);
+	background:-o-linear-gradient(top, #9e1414 5%, #570505 100%);
+	background:-ms-linear-gradient(top, #9e1414 5%, #570505 100%);
+	background:linear-gradient(to bottom, #9e1414 5%, #570505 100%);
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#9e1414', endColorstr='#570505',GradientType=0);
+	background-color:#9e1414;
+	-moz-border-radius:10px;
+	-webkit-border-radius:10px;
+	border-radius:10px;
+	border:1px solid #cf5757;
+	display:inline-block;
+	color:#ffffff;
+	font-family:visitorTT1;
+	font-size:26px;
+	padding:8px 54px;
+	text-decoration:none;
+	text-shadow:3px 3px 0 #000,-1px -1px 0 #470909,1px -1px 0 #470909,-1px 1px 0 #470909,1px 1px 0 #470909;
+}		
+.gameMenuBtn {
+    width: 256px;
+    height: 64px;
+    background: #383333;
+    background-image: -webkit-linear-gradient(top, #383333, #512121);
+    background-image: -moz-linear-gradient(top, #383333, #512121);
+    background-image: -ms-linear-gradient(top, #383333, #512121);
+    background-image: -o-linear-gradient(top, #383333, #512121);
+    background-image: linear-gradient(to bottom, #383333, #512121);
+    -webkit-border-radius: 4;
+    -moz-border-radius: 4;
+    border-radius: 4px;
+    font-family: visitorTT1;
+    color: #FFFFFF;
+    font-size: 24px;
+    padding: 4px 4px 4px 4px;
+    border: solid #1a0505 2px;
+    text-decoration: none;
+    box-shadow:inset 0px 1px 6px 1px #000000;
+    text-shadow:0px 5px 5px #000500;
+    text-align:center;
+    vertical-align:central;
+}
+.gameMenuBtn:hover {
+    background: #3e3838;
+    background-image: -webkit-linear-gradient(top, #3e3838, #512121);
+    background-image: -moz-linear-gradient(top, #3e3838, #512121);
+    background-image: -ms-linear-gradient(top, #3e3838, #512121);
+    background-image: -o-linear-gradient(top, #3e3838, #512121);
+    background-image: linear-gradient(to bottom, #3e3838, #512121);
+    text-decoration: none;
+}
