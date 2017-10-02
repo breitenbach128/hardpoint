@@ -107,7 +107,7 @@ passport.deserializeUser(function(obj, done) {
 
 
 //Database vars
-var connection_string = 'mongodb:\/\/su:su128@localhost:27017/admin?authSource=admin&authMechanism=MONGODB-CR';
+var connection_string = 'mongodb:\/\/su:su128@localhost:27017/game?authSource=admin&authMechanism=MONGODB-CR';
 var db = mongojs(connection_string, ['hp_users','hp_matches']);
 var hp_users_col = db.collection('hp_users');
 var hp_matches_col = db.collection('hp_matches');
