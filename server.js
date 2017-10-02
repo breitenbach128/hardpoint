@@ -107,13 +107,7 @@ passport.deserializeUser(function(obj, done) {
 
 
 //Database vars
-if(process.env.OPENSHIFT_MONGODB_DB_PASSWORD){
-    connection_string = process.env.OPENSHIFT_MONGODB_DB_USERNAME + ":" +
-    process.env.OPENSHIFT_MONGODB_DB_PASSWORD + "@" +
-    process.env.OPENSHIFT_MONGODB_DB_HOST + ':' +
-    process.env.OPENSHIFT_MONGODB_DB_PORT + '/' +
-    process.env.OPENSHIFT_APP_NAME;
-}
+var connection_string = 'mongodb:\/\/su:su128@localhost:27017/admin?authSource=admin&authMechanism=MONGODB-CR';
 var db = mongojs(connection_string, ['hp_users','hp_matches']);
 var hp_users_col = db.collection('hp_users');
 var hp_matches_col = db.collection('hp_matches');
