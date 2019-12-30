@@ -8,8 +8,8 @@ var passport = require('passport')
 var util = require('util');
 var app = express();
 //var GoogleStrategy = require('passport-google').Strategy;
-//var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
-var GoogleStrategy = require('passport-google-oauth20').Strategy;;
+var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+//var GoogleStrategy = require('passport-google-oauth20').Strategy;;
 //Directories
 var publicDirectory = "public_html";
 //Server variables for gameplay
