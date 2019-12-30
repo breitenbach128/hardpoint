@@ -8,7 +8,8 @@ var passport = require('passport')
 var util = require('util');
 var app = express();
 //var GoogleStrategy = require('passport-google').Strategy;
-var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+//var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+var GoogleStrategy = require('passport-google-oauth20');
 //Directories
 var publicDirectory = "public_html";
 //Server variables for gameplay
@@ -119,6 +120,7 @@ var hp_matches_col = db.collection('hp_matches');
 passport.use(new GoogleStrategy({
     clientID: GOOGLE_CLIENT_ID,
     clientSecret: GOOGLE_CLIENT_SECRET,
+    scope: 'profile',
     //callbackURL: 'http://localhost:'+process.env.PORT+'/auth/google/return'
     callbackURL: 'http://www.128games.com:8080/auth/google/return',
 },
