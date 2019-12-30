@@ -121,7 +121,6 @@ passport.use(new GoogleStrategy({
     clientSecret: GOOGLE_CLIENT_SECRET,
     //callbackURL: 'http://localhost:'+process.env.PORT+'/auth/google/return'
     callbackURL: 'http://www.128games.com:8080/auth/google/return',
-    userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo",
 },
   function(accessToken, refreshToken, profile, done) {
       // asynchronous verification, for effect...

@@ -7,9 +7,9 @@
     "Node.js",
     "application",
     "openshift",
-	"express",
-	"passport",
-	"mongodb"
+    "express",
+    "passport",
+    "mongodb"
   ],
   "author": {
     "name": "Ben Breitenbach",
@@ -21,24 +21,22 @@
     "type": "git",
     "url": "https://github.com/openshift/origin-server"
   },
-
   "engines": {
     "node": ">= 0.6.0",
     "npm": ">= 1.0.0"
   },
-
   "dependencies": {
-    "socket.io": "0.9.x",
-    "express": "~3.4.4",	
+    "ejs": ">= 0.0.0",
+    "express": "~3.4.4",
     "mongojs": "1.4.1",
-	"ejs": ">= 0.0.0",
     "passport": ">= 0.0.0",
     "passport-google": ">= 0.0.0",
-    "passport-google-oauth": ">= 0.0.0"
+    "passport-google-oauth": ">= 0.0.0",
+    "passport-google-oauth20": "^2.0.0",
+    "socket.io": "0.9.x"
   },
   "devDependencies": {},
   "bundleDependencies": [],
-
   "private": true,
   "main": "server.js"
 }
