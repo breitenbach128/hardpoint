@@ -9,7 +9,7 @@ var util = require('util');
 var app = express();
 //var GoogleStrategy = require('passport-google').Strategy;
 //var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
-var GoogleStrategy = require('passport-google-oauth20');
+var GoogleStrategy = require('passport-google-oauth20').Strategy;;
 //Directories
 var publicDirectory = "public_html";
 //Server variables for gameplay
@@ -567,7 +567,9 @@ var SampleApp = function() {
         //   will redirect the user back to this application at /auth/google/callback
         self.app.get('/auth/google',
           //passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/plus.login','https://www.googleapis.com/auth/plus.profile.emails.read'] }),
-          passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/userinfo.email','https://www.googleapis.com/auth/userinfo.profile'] }),
+          //passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/userinfo.email','https://www.googleapis.com/auth/userinfo.profile'] }),
+          passport.authenticate('google', { scope: ['profile'] }),
+          
           function(req, res){
               // The request will be redirected to Google for authentication, so this
               // function will not be called.
