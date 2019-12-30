@@ -84,7 +84,7 @@ dcCacheTimer = setInterval(function () {
 
 //Google IDs
 var GOOGLE_CLIENT_ID = "574759193783-00ci4dnduaunuqtj7vvp537tatecjifu.apps.googleusercontent.com";
-var GOOGLE_CLIENT_SECRET = "VSqk-4Ta3EF0XcFdfkkb3KCI";
+var GOOGLE_CLIENT_SECRET = "LBzM6OUuhj3zJnekF87-7qpW";
 
 // Passport session setup.
 //   To support persistent login sessions, Passport needs to be able to
