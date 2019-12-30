@@ -125,9 +125,7 @@ passport.use(new GoogleStrategy({
     callbackURL: 'http://www.128games.com:8080/auth/google/return',
 },
 function(accessToken, refreshToken, profile, cb) {
-    User.findOrCreate({ googleId: profile.id }, function (err, user) {
-      return cb(err, user);
-    });
+    return cb(null, profile);
   }
 //   function(accessToken, refreshToken, profile, done) {
 //       // asynchronous verification, for effect...
