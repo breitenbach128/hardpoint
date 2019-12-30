@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "ejs": ">= 0.0.0",
-    "express": "~3.4.4",
+    "express": "~4.17.1",
     "mongojs": "1.4.1",
     "passport": ">= 0.0.0",
     "passport-google": ">= 0.0.0",
