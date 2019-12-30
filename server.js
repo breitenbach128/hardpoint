@@ -128,7 +128,7 @@ function(accessToken, refreshToken, profile, cb) {
     User.findOrCreate({ googleId: profile.id }, function (err, user) {
       return cb(err, user);
     });
-  },
+  }
 //   function(accessToken, refreshToken, profile, done) {
 //       // asynchronous verification, for effect...
 //       process.nextTick(function () {
