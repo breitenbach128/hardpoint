@@ -567,7 +567,7 @@ var SampleApp = function() {
         //   will redirect the user back to this application at /auth/google/callback
         self.app.get('/auth/google',
           //passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/plus.login','https://www.googleapis.com/auth/plus.profile.emails.read'] }),
-          passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/userinfo.email','https://www.googleapis.com/auth/profile.emails.read'] }),
+          passport.authenticate('google', { scope: ['https://www.googleapis.com/auth/userinfo.email','https://www.googleapis.com/auth/userinfo.profile'] }),
           function(req, res){
               // The request will be redirected to Google for authentication, so this
               // function will not be called.
