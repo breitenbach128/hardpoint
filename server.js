@@ -124,76 +124,81 @@ passport.use(new GoogleStrategy({
     //callbackURL: 'http://localhost:'+process.env.PORT+'/auth/google/return'
     callbackURL: 'http://www.128games.com:8080/auth/google/return',
 },
-  function(accessToken, refreshToken, profile, done) {
-      // asynchronous verification, for effect...
-      process.nextTick(function () {
+function(accessToken, refreshToken, profile, cb) {
+    User.findOrCreate({ googleId: profile.id }, function (err, user) {
+      return cb(err, user);
+    });
+  },
+//   function(accessToken, refreshToken, profile, done) {
+//       // asynchronous verification, for effect...
+//       process.nextTick(function () {
       
-          // To keep the example simple, the user's Google profile is returned to
-          // represent the logged-in user.  In a typical application, you would want
-          // to associate the Google account with a user record in your database,
-          // and return that user instead.
-          //var db = mongojs(connection_string, ['hp_users']);
-          //var hp_users_col = db.collection('hp_users');
+//           // To keep the example simple, the user's Google profile is returned to
+//           // represent the logged-in user.  In a typical application, you would want
+//           // to associate the Google account with a user record in your database,
+//           // and return that user instead.
+//           //var db = mongojs(connection_string, ['hp_users']);
+//           //var hp_users_col = db.collection('hp_users');
           
-          //console.log("pid type",(typeof (profile.id)),profile);
+//           //console.log("pid type",(typeof (profile.id)),profile);
           
-          hp_users_col.find({pid:(profile.id)}).toArray(function(err,users){
-              if (err || !users) {
-                  console.log("err",err);
-                  return done(null, profile);
-              }else if(users.length == 0){
-                  console.log("no users found");
-                  //Create object
-                  //var namearray = profile.displayName.toString();
-                  //var subname = namearray[0] + profile.id.toString().substring(0,8);
-                  var subname = "Newbie" + profile.id.toString().substring(0,8);
-                  var userobject = {
-                      pid:profile.id,
-                      name: subname,//Make this a combo of name and pid (NO SPACES ALLOWED!)
-                      email: profile.emails[0].value,
-                      authstatus: true,
-                      beta: false,
-                      currentsocketid: 0,
-                      careerkills: 0,
-                      careerdeaths: 0,
-                      careerassists: 0,
-                      totaldamrcv: 0,
-                      totaldamgiven: 0,
-                      caps: 0,
-                      profilepic: "test.jpg",
-                      matches: [],
-                      wins: 0,
-                      loses: 0,
-                      disconnects: 0,
-                      reports: 0,
-                      kicks: 0,
-                      xp: 0,
-                      friends:new Array(),//{friendId: <globalId>, status: blocked/pending/accepted/sent}
-                  }
-                  //var db = mongojs(connection_string, ['hp_users'],{authMechanism: 'ScramSHA1'});
-                  //var db = mongojs(connection_string, ['hp_users']);
-                  //var hp_users_col = db.collection('hp_users');
-                  //insert object
-                  hp_users_col.insert(userobject, function(err){
-                      if(err){
-                          console.log(err);
-                          return done(null, profile);
-                      }else{
-                          console.log("insert complete");
-                          return done(null, profile);
-                      };
+//           hp_users_col.find({pid:(profile.id)}).toArray(function(err,users){
+//               if (err || !users) {
+//                   console.log("err",err);
+//                   return done(null, profile);
+//               }else if(users.length == 0){
+//                   console.log("no users found");
+//                   //Create object
+//                   //var namearray = profile.displayName.toString();
+//                   //var subname = namearray[0] + profile.id.toString().substring(0,8);
+//                   var subname = "Newbie" + profile.id.toString().substring(0,8);
+//                   var userobject = {
+//                       pid:profile.id,
+//                       name: subname,//Make this a combo of name and pid (NO SPACES ALLOWED!)
+//                       email: profile.emails[0].value,
+//                       authstatus: true,
+//                       beta: false,
+//                       currentsocketid: 0,
+//                       careerkills: 0,
+//                       careerdeaths: 0,
+//                       careerassists: 0,
+//                       totaldamrcv: 0,
+//                       totaldamgiven: 0,
+//                       caps: 0,
+//                       profilepic: "test.jpg",
+//                       matches: [],
+//                       wins: 0,
+//                       loses: 0,
+//                       disconnects: 0,
+//                       reports: 0,
+//                       kicks: 0,
+//                       xp: 0,
+//                       friends:new Array(),//{friendId: <globalId>, status: blocked/pending/accepted/sent}
+//                   }
+//                   //var db = mongojs(connection_string, ['hp_users'],{authMechanism: 'ScramSHA1'});
+//                   //var db = mongojs(connection_string, ['hp_users']);
+//                   //var hp_users_col = db.collection('hp_users');
+//                   //insert object
+//                   hp_users_col.insert(userobject, function(err){
+//                       if(err){
+//                           console.log(err);
+//                           return done(null, profile);
+//                       }else{
+//                           console.log("insert complete");
+//                           return done(null, profile);
+//                       };
 
-                  });
+//                   });
 
                   
-              } else {
-                  //console.log("Yes users found",users[0].pid);
-                  return done(null, profile);
-              }
-          });
+//               } else {
+//                   //console.log("Yes users found",users[0].pid);
+//                   return done(null, profile);
+//               }
+//           });
 
-      });
-  }
+//       });
+//   }
 ))
 /**
  *  Define the sample application.
