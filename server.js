@@ -125,56 +125,58 @@ passport.use(new GoogleStrategy({
     callbackURL: 'http://www.128games.com:8080/auth/google/return',
 },
 function(accessToken, refreshToken, profile, cb) {
-    hp_users_col.find({pid:(profile.id)}).toArray(function(err,users){
-        if (err || !users) {
-            console.log("err",err);
-            return cb(null, profile);
-        }else if(users.length == 0){
-            console.log("no users found, creating");
-            //Create object
-            var subname = "Newbie" + profile.id.toString().substring(0,8);
-            var userobject = {
-                pid:profile.id,
-                name: subname,//Make this a combo of name and pid (NO SPACES ALLOWED!)
-                email: profile.emails[0].value,
-                authstatus: true,
-                beta: false,
-                currentsocketid: 0,
-                careerkills: 0,
-                careerdeaths: 0,
-                careerassists: 0,
-                totaldamrcv: 0,
-                totaldamgiven: 0,
-                caps: 0,
-                profilepic: "test.jpg",
-                matches: [],
-                wins: 0,
-                loses: 0,
-                disconnects: 0,
-                reports: 0,
-                kicks: 0,
-                xp: 0,
-                friends:new Array(),//{friendId: <globalId>, status: blocked/pending/accepted/sent}
-            }
+    //FIX DB ISSUES TO CORRECT TIMEOUT ISSUE
+    
+    // hp_users_col.find({pid:(profile.id)}).toArray(function(err,users){
+    //     if (err || !users) {
+    //         console.log("err",err);
+    //         return cb(null, profile);
+    //     }else if(users.length == 0){
+    //         console.log("no users found, creating");
+    //         //Create object
+    //         var subname = "Newbie" + profile.id.toString().substring(0,8);
+    //         var userobject = {
+    //             pid:profile.id,
+    //             name: subname,//Make this a combo of name and pid (NO SPACES ALLOWED!)
+    //             email: profile.emails[0].value,
+    //             authstatus: true,
+    //             beta: false,
+    //             currentsocketid: 0,
+    //             careerkills: 0,
+    //             careerdeaths: 0,
+    //             careerassists: 0,
+    //             totaldamrcv: 0,
+    //             totaldamgiven: 0,
+    //             caps: 0,
+    //             profilepic: "test.jpg",
+    //             matches: [],
+    //             wins: 0,
+    //             loses: 0,
+    //             disconnects: 0,
+    //             reports: 0,
+    //             kicks: 0,
+    //             xp: 0,
+    //             friends:new Array(),//{friendId: <globalId>, status: blocked/pending/accepted/sent}
+    //         }
 
-            //insert object
-            hp_users_col.insert(userobject, function(err){
-                if(err){
-                    console.log(err);
-                    return cb(null, profile);
-                }else{
-                    console.log("insert complete");
-                    return cb(null, profile);
-                };
+    //         //insert object
+    //         hp_users_col.insert(userobject, function(err){
+    //             if(err){
+    //                 console.log(err);
+    //                 return cb(null, profile);
+    //             }else{
+    //                 console.log("insert complete");
+    //                 return cb(null, profile);
+    //             };
 
-            });
+    //         });
             
-        } else {
-            //console.log("Yes users found",users[0].pid);
-            return cb(null, profile);
-        }
-    });
-    //return cb(null, profile);
+    //     } else {
+    //         //console.log("Yes users found",users[0].pid);
+    //         return cb(null, profile);
+    //     }
+    // });
+    return cb(null, profile);
   }
 //   function(accessToken, refreshToken, profile, done) {
 //       // asynchronous verification, for effect...
